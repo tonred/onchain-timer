@@ -1,0 +1,161 @@
+int MF:IgnoreErrors()   asm "2 PUSHINT";
+
+
+;; timer_active, owner_address, events
+(int, int, cell) load_data() inline_ref {
+    var cs = get_data().begin_parse();
+    var res = (cs~load_uint(8), cs~load_uint(256), cs~load_dict());
+    cs.end_parse();
+    return res;
+}
+
+() store_data(timer_active, owner_address, events) impure inline_ref {
+    set_data(begin_cell()
+        .store_uint(timer_active, 8)
+        .store_uint(owner_address, 256)
+        .store_dict(events)
+    .end_cell());
+}
+
+() send_message(bounce, wc, dest, value, body) impure inline_ref {
+    var msg = begin_cell()
+        .store_uint(bounce, 9)
+        .store_int(wc, 8)
+        .store_uint(dest, 256)
+        .store_grams(value)
+        .store_uint (0, 107); ;; 1 + 4 + 4 + 64 + 32 + 1 + 1
+    if (body >= 0) {
+        msg~store_uint(0x68febeab, 32); ;; TimerManager.onEvent method
+        msg~store_uint(body, 32);
+    }
+    send_raw_message(msg.end_cell(), MF:IgnoreErrors());
+}
+
+() send_activation(event_id) impure inline_ref {
+    var (_, owner_address, _) = load_data();
+    send_message(0x84, 0, owner_address, 10000000, event_id);
+}
+
+() send_empty_message() impure inline_ref {
+    send_message(0xC4, 0, 1, 770000000, 0);
+}
+
+cell remove_event(events_dict, event_id) inline_ref {
+    events_dict~udict_delete?(32, event_id);
+    return events_dict;
+}
+
+(int, cell) check_events(events_dict) inline_ref {
+    int event_id = -1;
+    var current_time = now();
+    var events_updated = false;
+    do {
+        (event_id, var cs, var f) = events_dict.udict_get_next?(32, event_id);
+        if (f) {
+            var activation_time = cs~load_uint(64);
+            if (activation_time <= current_time){
+                send_activation(event_id);
+                events_dict = remove_event(events_dict, event_id);
+                events_updated = true;
+            }
+        }
+    } until (~ f);
+    return (events_updated, events_dict);
+}
+
+
+() recv_internal(int msg_value, cell in_msg_cell, slice in_msg) impure {
+    var cs = in_msg_cell.begin_parse();
+    var flags = cs~load_uint(4);
+    var (timer_active, owner_address, events) = load_data();
+    if ((flags & 1) & (timer_active == 1)) {    ;; bounced messages
+        send_empty_message();
+        (int is_updated, events) = check_events(events);
+        if (is_updated) {
+            if (events.dict_empty?()) {
+                timer_active = 0;
+            }
+            store_data(timer_active, owner_address, events);
+        }
+        return ();
+    }
+
+    var s_addr = cs~load_msg_addr();
+    var (src_wc, src_addr) = parse_std_addr(s_addr);
+    if (timer_active == 10) {
+        owner_address = src_addr;
+        store_data(0, src_addr, events);
+        return ();
+    }
+
+    throw_unless(101, owner_address == src_addr);
+    if (in_msg.slice_empty?()) {
+        return ();
+    }
+    int op = in_msg~load_uint(8);
+    if (op == 0) {
+        ;; pause timer
+        store_data(0, owner_address, events);
+        return ();
+    }
+    if (op == 1) {
+        ;; resume timer if events not empty
+        ifnot (events.dict_empty?()) {
+            store_data(1, owner_address, events);
+            send_empty_message();
+        }
+        return ();
+    }
+    int msg_event_id = in_msg~load_uint(32);
+    if (op == 10) {
+        ;; remove event
+        events = remove_event(events, msg_event_id);
+        if (events.dict_empty?()) {
+            timer_active = 0;
+        }
+        store_data(timer_active, owner_address, events);
+        return ();
+    }
+
+    int msg_event_time = in_msg~load_uint(64);
+    if (op == 11) {
+        ;; add event
+        slice value = begin_cell().store_uint(msg_event_time, 64).end_cell().begin_parse();
+        events = events.udict_set(32, msg_event_id, value);
+        if (timer_active == 0) {
+            timer_active = 1;
+            send_empty_message();
+        }
+        store_data(timer_active, owner_address, events);
+        return ();
+    }
+}
+
+() recv_external(slice in_msg) impure {
+    ;; ignore
+}
+
+
+;; GET METHODS
+
+int get_owner_address() method_id {
+    var (_, owner_address, _) = load_data();
+    return owner_address;
+}
+
+int get_timer_status() method_id {
+    var (timer_status, _, _) = load_data();
+    return timer_status;
+}
+
+int get_events_amount() method_id {
+    var (_, _, events) = load_data();
+    var event_id = -1;
+    int i = 0;
+    do {
+        (event_id, var cs, var f) = events.udict_get_next?(32, event_id);
+        if (f) { i += 1; }
+    } until (~ f);
+    return i;
+}
+

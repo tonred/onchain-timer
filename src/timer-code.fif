@@ -1,0 +1,288 @@
+"Asm.fif" include
+// automatically generated from `/ton/crypto/smartcont/stdlib.fc` `timer.fc`
+PROGRAM{
+  DECLPROC load_data
+  DECLPROC store_data
+  DECLPROC send_message
+  DECLPROC send_activation
+  DECLPROC send_empty_message
+  DECLPROC remove_event
+  DECLPROC check_events
+  DECLPROC recv_internal
+  DECLPROC recv_external
+  114619 DECLMETHOD get_owner_address
+  107507 DECLMETHOD get_timer_status
+  116743 DECLMETHOD get_events_amount
+  load_data PROCREF:<{
+    //
+    c4 PUSH	//  _1
+    CTOS	//  cs
+    8 LDU	//  _4 cs
+    256 LDU	//  _4 _7 cs
+    LDDICT	//  res res res cs
+    ENDS
+  }>
+  store_data PROCREF:<{
+    //  timer_active owner_address events
+    s0 s2 XCHG
+    NEWC	//  events owner_address timer_active _3
+    8 STU	//  events owner_address _5
+    256 STU	//  events _7
+    STDICT	//  _8
+    ENDC	//  _9
+    c4 POP
+  }>
+  send_message PROCREF:<{
+    //  bounce wc dest value body
+    0 PUSHINT	//  bounce wc dest value body _6=0
+    s0 s5 XCHG
+    NEWC	//  _6=0 wc dest value body bounce _7
+    9 STU	//  _6=0 wc dest value body _9
+    s1 s4 XCHG	//  _6=0 body dest value wc _9
+    8 STI	//  _6=0 body dest value _11
+    s1 s2 XCHG	//  _6=0 body value dest _11
+    256 STU	//  _6=0 body value _13
+    SWAP	//  _6=0 body _13 value
+    STGRAMS	//  _6=0 body _14
+    s1 s2 XCHG	//  body _6=0 _14
+    107 STU	//  body msg
+    OVER	//  body msg body
+    -1 GTINT	//  body msg _18
+    IF:<{	//  body msg
+      1761525419 PUSHINT	//  body msg _20=1761525419
+      SWAP	//  body _20=1761525419 msg
+      32 STU	//  body msg
+      32 STU	//  msg
+    }>ELSE<{
+      NIP	//  msg
+    }>
+    ENDC	//  _26
+    2 PUSHINT	//  _26 _27
+    SENDRAWMSG
+  }>
+  send_activation PROCREF:<{
+    //  event_id
+    load_data INLINECALLDICT	//  event_id _9 _10 _11
+    DROP
+    NIP	//  event_id owner_address
+    132 PUSHINT	//  event_id owner_address _5=132
+    0 PUSHINT	//  event_id owner_address _5=132 _6=0
+    s0 s0 s3 XCHG3
+    10000000 PUSHINT
+    SWAP	//  _5=132 _6=0 owner_address _7=10000000 event_id
+    send_message INLINECALLDICT
+  }>
+  send_empty_message PROCREF:<{
+    //
+    196 PUSHINT	//  _0=196
+    0 PUSHINT	//  _0=196 _1=0
+    1 PUSHINT	//  _0=196 _1=0 _2=1
+    770000000 PUSHINT	//  _0=196 _1=0 _2=1 _3=770000000
+    s2 PUSH	//  _0=196 _1=0 _2=1 _3=770000000 _4=0
+    send_message INLINECALLDICT
+  }>
+  remove_event PROCREF:<{
+    //  events_dict event_id
+    SWAP
+    32 PUSHINT	//  event_id events_dict _3=32
+    DICTUDEL	//  _5 _6
+    DROP	//  events_dict
+  }>
+  check_events PROCREF:<{
+    //  events_dict
+    -1 PUSHINT	//  events_dict event_id=-1
+    NOW	//  events_dict event_id=-1 current_time
+    FALSE	//  events_dict event_id=-1 current_time events_updated
+    UNTIL:<{
+      s2 s3 XCPU
+      32 PUSHINT	//  events_dict events_updated current_time event_id events_dict _9=32
+      DICTUGETNEXT
+      NULLSWAPIFNOT2	//  events_dict events_updated current_time cs event_id f
+      DUP	//  events_dict events_updated current_time cs event_id f f
+      IF:<{	//  events_dict events_updated current_time cs event_id f
+        s0 s2 XCHG	//  events_dict events_updated current_time f event_id cs
+        64 LDU	//  events_dict events_updated current_time f event_id _24 _23
+        DROP	//  events_dict events_updated current_time f event_id activation_time
+        s3 PUSH	//  events_dict events_updated current_time f event_id activation_time current_time
+        LEQ	//  events_dict events_updated current_time f event_id _15
+        IF:<{	//  events_dict events_updated current_time f event_id
+          s3 POP	//  events_dict event_id current_time f
+          s2 PUSH	//  events_dict event_id current_time f event_id
+          send_activation INLINECALLDICT
+          s3 s2 XCPU	//  f event_id current_time events_dict event_id
+          remove_event INLINECALLDICT	//  f event_id current_time events_dict
+          s0 s3 XCHG
+          TRUE
+          s0 s3 XCHG	//  events_dict events_updated current_time f event_id
+        }>	//  events_dict events_updated current_time f event_id
+      }>ELSE<{
+        s2 POP	//  events_dict events_updated current_time f event_id
+      }>
+      SWAP	//  events_dict events_updated current_time event_id f
+      NOT	//  events_dict events_updated current_time event_id _19
+      s1 s3 XCHG	//  events_dict event_id current_time events_updated _19
+    }>	//  events_dict event_id current_time events_updated
+    2 1 BLKDROP2	//  events_dict events_updated
+    SWAP	//  events_updated events_dict
+  }>
+  recv_internal PROC:<{
+    //  msg_value in_msg_cell in_msg
+    s2 POP	//  in_msg in_msg_cell
+    CTOS	//  in_msg cs
+    4 LDU	//  in_msg flags cs
+    load_data INLINECALLDICT	//  in_msg flags cs timer_active owner_address events
+    s0 s4 XCHG
+    1 PUSHINT	//  in_msg events cs timer_active owner_address flags _13=1
+    AND	//  in_msg events cs timer_active owner_address _14
+    s2 PUSH	//  in_msg events cs timer_active owner_address _14 timer_active
+    1 EQINT	//  in_msg events cs timer_active owner_address _14 _16
+    AND	//  in_msg events cs timer_active owner_address _17
+    IFJMP:<{	//  in_msg events cs timer_active owner_address
+      s2 POP
+      s3 POP	//  timer_active events owner_address
+      send_empty_message INLINECALLDICT
+      SWAP	//  timer_active owner_address events
+      check_events INLINECALLDICT	//  timer_active owner_address is_updated events
+      SWAP	//  timer_active owner_address events is_updated
+      IF:<{	//  timer_active owner_address events
+        DUP	//  timer_active owner_address events events
+        DICTEMPTY	//  timer_active owner_address events _21
+        IF:<{	//  timer_active owner_address events
+          0 PUSHINT
+          s3 POP	//  timer_active=0 owner_address events
+        }>	//  timer_active owner_address events
+        store_data INLINECALLDICT
+      }>ELSE<{
+        3 BLKDROP	//
+      }>
+    }>	//  in_msg events cs timer_active owner_address
+    s0 s2 XCHG	//  in_msg events owner_address timer_active cs
+    LDMSGADDR	//  in_msg events owner_address timer_active _89 _88
+    DROP	//  in_msg events owner_address timer_active s_addr
+    REWRITESTDADDR	//  in_msg events owner_address timer_active _90 _91
+    NIP	//  in_msg events owner_address timer_active src_addr
+    OVER	//  in_msg events owner_address timer_active src_addr timer_active
+    10 EQINT	//  in_msg events owner_address timer_active src_addr _31
+    IFJMP:<{	//  in_msg events owner_address timer_active src_addr
+      2 1 BLKDROP2
+      0 PUSHINT
+      s3 POP
+      SWAP	//  _32=0 src_addr events
+      store_data INLINECALLDICT
+    }>	//  in_msg events owner_address timer_active src_addr
+    s2 s(-1) PUXC	//  in_msg events owner_address timer_active owner_address src_addr
+    EQUAL	//  in_msg events owner_address timer_active _35
+    101 THROWIFNOT
+    s3 PUSH	//  in_msg events owner_address timer_active in_msg
+    SEMPTY	//  in_msg events owner_address timer_active _37
+    IFJMP:<{	//  in_msg events owner_address timer_active
+      4 BLKDROP	//
+    }>	//  in_msg events owner_address timer_active
+    s0 s3 XCHG	//  timer_active events owner_address in_msg
+    8 LDU	//  timer_active events owner_address op in_msg
+    OVER	//  timer_active events owner_address op in_msg op
+    0 EQINT	//  timer_active events owner_address op in_msg _43
+    IFJMP:<{	//  timer_active events owner_address op in_msg
+      2DROP
+      0 PUSHINT
+      s3 POP
+      SWAP	//  _44=0 owner_address events
+      store_data INLINECALLDICT
+    }>	//  timer_active events owner_address op in_msg
+    OVER	//  timer_active events owner_address op in_msg op
+    1 EQINT	//  timer_active events owner_address op in_msg _47
+    IFJMP:<{	//  timer_active events owner_address op in_msg
+      2DROP
+      s2 POP	//  owner_address events
+      DUP	//  owner_address events events
+      DICTEMPTY	//  owner_address events _48
+      IFNOT:<{	//  owner_address events
+        1 PUSHINT	//  owner_address events _49=1
+        -ROT	//  _49=1 owner_address events
+        store_data INLINECALLDICT
+        send_empty_message INLINECALLDICT
+      }>ELSE<{
+        2DROP	//
+      }>
+    }>	//  timer_active events owner_address op in_msg
+    32 LDU	//  timer_active events owner_address op msg_event_id in_msg
+    s2 PUSH	//  timer_active events owner_address op msg_event_id in_msg op
+    10 EQINT	//  timer_active events owner_address op msg_event_id in_msg _57
+    IFJMP:<{	//  timer_active events owner_address op msg_event_id in_msg
+      DROP
+      NIP	//  timer_active events owner_address msg_event_id
+      s1 s2 XCHG	//  timer_active owner_address events msg_event_id
+      remove_event INLINECALLDICT	//  timer_active owner_address events
+      DUP	//  timer_active owner_address events events
+      DICTEMPTY	//  timer_active owner_address events _59
+      IF:<{	//  timer_active owner_address events
+        0 PUSHINT
+        s3 POP	//  timer_active=0 owner_address events
+      }>	//  timer_active owner_address events
+      store_data INLINECALLDICT
+    }>	//  timer_active events owner_address op msg_event_id in_msg
+    64 LDU	//  timer_active events owner_address op msg_event_id _97 _96
+    DROP	//  timer_active events owner_address op msg_event_id msg_event_time
+    s0 s2 XCHG	//  timer_active events owner_address msg_event_time msg_event_id op
+    11 EQINT	//  timer_active events owner_address msg_event_time msg_event_id _67
+    IFJMP:<{	//  timer_active events owner_address msg_event_time msg_event_id
+      SWAP
+      NEWC	//  timer_active events owner_address msg_event_id msg_event_time _69
+      64 STU	//  timer_active events owner_address msg_event_id _71
+      ENDC	//  timer_active events owner_address msg_event_id _72
+      CTOS	//  timer_active events owner_address msg_event_id value
+      s0 s1 s3 XCHG3
+      32 PUSHINT	//  timer_active owner_address value msg_event_id events _74=32
+      DICTUSET	//  timer_active owner_address events
+      s2 PUSH	//  timer_active owner_address events timer_active
+      0 EQINT	//  timer_active owner_address events _77
+      IF:<{	//  timer_active owner_address events
+        s2 POP	//  events owner_address
+        1 PUSHINT	//  events owner_address timer_active=1
+        send_empty_message INLINECALLDICT
+        s0 s2 XCHG	//  timer_active=1 owner_address events
+      }>	//  timer_active owner_address events
+      store_data INLINECALLDICT
+    }>	//  timer_active events owner_address msg_event_time msg_event_id
+    5 BLKDROP	//
+  }>
+  recv_external PROC:<{
+    //  in_msg
+    DROP	//
+  }>
+  get_owner_address PROC:<{
+    //
+    load_data INLINECALLDICT	//  _4 _5 _6
+    DROP
+    NIP	//  owner_address
+  }>
+  get_timer_status PROC:<{
+    //
+    load_data INLINECALLDICT	//  _4 _5 _6
+    2DROP	//  timer_status
+  }>
+  get_events_amount PROC:<{
+    //
+    load_data INLINECALLDICT	//  _15 _16 _17
+    2 1 BLKDROP2	//  events
+    -1 PUSHINT	//  events event_id=-1
+    0 PUSHINT	//  events event_id=-1 i=0
+    UNTIL:<{
+      s1 s2 XCPU
+      32 PUSHINT	//  events i event_id events _10=32
+      DICTUGETNEXT
+      NULLSWAPIFNOT2	//  events i _19 _18 _20
+      s2 POP	//  events i f event_id
+      OVER	//  events i f event_id f
+      IF:<{	//  events i f event_id
+        s0 s2 XCHG	//  events event_id f i
+        INC	//  events event_id f i
+        s0 s2 XCHG	//  events i f event_id
+      }>	//  events i f event_id
+      SWAP	//  events i event_id f
+      NOT	//  events i event_id _14
+      s1 s2 XCHG	//  events event_id i _14
+    }>	//  events event_id i
+    2 1 BLKDROP2	//  i
+  }>
+}END>c

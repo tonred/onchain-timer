@@ -1,0 +1,11 @@
+#!/usr/bin/fift -s
+"TonUtil.fif" include
+"Asm.fif" include
+
+def? $1 { @' $1 } { "timer" } cond constant file-base
+."Assembling timer code " cr
+
+"timer-code.fif" include
+2 boc+>B dup Bx. cr
+file-base +"-code.boc" tuck B>file
+."(Saved timer binary code to file " type .")" cr

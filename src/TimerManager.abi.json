@@ -1,0 +1,102 @@
+{
+	"ABI version": 2,
+	"header": ["time"],
+	"functions": [
+		{
+			"name": "constructor",
+			"inputs": [
+				{"name":"timerCode","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getTimer",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "addEvent",
+			"inputs": [
+				{"name":"dest","type":"address"},
+				{"name":"value","type":"uint128"},
+				{"name":"payload","type":"cell"},
+				{"name":"bounce","type":"bool"},
+				{"name":"sendFlags","type":"uint16"},
+				{"name":"delay","type":"uint64"},
+				{"name":"next","type":"uint64"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "removeEvent",
+			"inputs": [
+				{"name":"eventId","type":"uint32"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getEvents",
+			"inputs": [
+			],
+			"outputs": [
+				{"components":[{"name":"id","type":"uint32"},{"name":"dest","type":"address"},{"name":"value","type":"uint128"},{"name":"payload","type":"cell"},{"name":"bounce","type":"bool"},{"name":"sendFlags","type":"uint16"},{"name":"delay","type":"uint64"},{"name":"next","type":"uint64"},{"name":"last","type":"uint64"}],"name":"eventsList","type":"tuple[]"}
+			]
+		},
+		{
+			"name": "onEvent",
+			"inputs": [
+				{"name":"eventId","type":"uint32"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "replenishTimer",
+			"inputs": [
+				{"name":"value","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "updateTimerAddress",
+			"inputs": [
+				{"name":"newTimer","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "stopPending",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "startPending",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setCode",
+			"inputs": [
+				{"name":"code","type":"cell"}
+			],
+			"outputs": [
+			]
+		}
+	],
+	"data": [
+	],
+	"events": [
+	]
+}
