@@ -11,7 +11,7 @@ This timer consists of two contracts that work together, one written in Solidity
  - User-friendly interface (ABI)
  - Can be used from another Solidity smart contracts
 ## Components and workflow
-![alt text](Timer diagram.png "Timer diagram")
+![alt text](https://github.com/pavelkhachatrian/freeton-timer/blob/main/Timer%20diagram.png?raw=true "Timer diagram")
 
 The timer consists of two contracts, TimerManager (Solidity) and Timer (FunC). User interacts only with TimerManager through its public methods. 
 
