@@ -24,6 +24,16 @@ When Timer has events that need to be processed, it creates a message to a non-e
 When the Timer has an event that needs to be executed, it creates a message on the TimerManager with the ID of this event, the TimerManager will receive this message and send the appropriate callback and set a new event on the Timer, if necessary.
 
 ## How to use
+### Deploy via deploy.js
+```shell script
+node deploy.js [--node-se] [--network=net.ton.dev]
+
+  -l, --node-se        deploy to node-se with default giver
+  -n, --network <url>  network url (default: "http://localhost")
+  -k, --keys <path>    path to file with keys (default: "timer.keys.json")
+  -h, --help           display help for command
+
+```
 ### Deploy via tonos-cli
 ```shell script
 tonos-cli genphrase
@@ -118,4 +128,3 @@ Step 3: Encoding contract code to base64,
 base64 timer-code-code.boc -w 0
 ```
 ---
-### Author @get_username
