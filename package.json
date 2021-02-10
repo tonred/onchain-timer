@@ -1,0 +1,27 @@
+{
+  "name": "freeton-timer",
+  "version": "1.0.1",
+  "description": "On-chain timer for Free TON ",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tonred/onchain-timer.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tonred/onchain-timer/issues"
+  },
+  "homepage": "https://github.com/tonred/onchain-timer#readme",
+  "dependencies": {
+    "@tonclient/core": "^1.7.0",
+    "@tonclient/lib-node": "^1.7.0",
+    "commander": "^7.0.0"
+  }
+}

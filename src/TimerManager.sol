@@ -1,9 +1,10 @@
-pragma solidity >=0.6.0;
+pragma ton-solidity >= 0.36.0;
 
 contract Timer {}
 
 contract TimerManager {
 
+    address owner;
     address timer;
 
     struct Event {
@@ -39,7 +40,7 @@ contract TimerManager {
     uint128 constant TIMER_CALL_VALUE = 1e8;
 
     modifier checkOwnerAndAccept {
-        require(msg.pubkey() == tvm.pubkey(), IS_NOT_OWNER);
+        require(msg.pubkey() == tvm.pubkey() || (owner != address(0) && msg.sender == owner), IS_NOT_OWNER);
         tvm.accept();
         _;
     }
@@ -51,6 +52,9 @@ contract TimerManager {
     }
 
     constructor(TvmCell timerCode) public checkOwnerAndAccept{
+        if (msg.sender != address(0)) {
+            owner == msg.sender;
+        }
         TvmBuilder buildHash;
         buildHash.store(address(this));
         uint256 publicKey = tvm.hash(buildHash.toCell());
@@ -60,10 +64,10 @@ contract TimerManager {
         buildData.store(timerInitCode, publicKey, timerEventsDict);
         TvmCell timerData = buildData.toCell();
         TvmCell stateInit = tvm.buildStateInit(timerCode, timerData);
-        timer = new Timer{value: TIMER_DEPLOY_VALUE, stateInit: stateInit}();
+        timer = new Timer{value : TIMER_DEPLOY_VALUE, stateInit : stateInit}();
     }
 
-    function getTimer() public view returns(address){
+    function getTimer() public view returns (address){
         return timer;
     }
 
@@ -120,11 +124,11 @@ contract TimerManager {
         }
     }
 
-    function sendCallback(Event eventData) private {
+    function sendCallback(Event eventData) pure private {
         eventData.dest.transfer(eventData.value, eventData.bounce, eventData.sendFlags, eventData.payload);
     }
 
-    function replenishTimer(uint128 value) public checkOwnerAndAccept {
+    function replenishTimer(uint128 value) public view checkOwnerAndAccept {
         timer.transfer(value, false);
     }
 
@@ -132,36 +136,36 @@ contract TimerManager {
         timer = newTimer;
     }
 
-    function setEventOnTimer(uint32 eventId, uint64 next) private {
+    function setEventOnTimer(uint32 eventId, uint64 next) private view {
         TvmBuilder payload;
         payload.store(TIMER_ADD_EVENT_CODE, eventId, next);
         callTimer(payload);
     }
 
-    function removeEventOnTimer(uint32 eventId) private {
+    function removeEventOnTimer(uint32 eventId) private view {
         TvmBuilder payload;
         payload.store(TIMER_REMOVE_EVENT_CODE, eventId);
         callTimer(payload);
     }
 
-    function stopPending() public checkOwnerAndAccept {
+    function stopPending() public view checkOwnerAndAccept {
         TvmBuilder payload;
         payload.store(TIMER_PAUSE_CODE);
         callTimer(payload);
     }
 
-    function startPending() public checkOwnerAndAccept {
+    function startPending() public view checkOwnerAndAccept {
         TvmBuilder payload;
         payload.store(TIMER_RESUME_CODE);
         callTimer(payload);
     }
 
-    function callTimer(TvmBuilder payload) private {
-        timer.transfer({value:TIMER_CALL_VALUE, body:payload.toCell()});
+    function callTimer(TvmBuilder payload) private view {
+        timer.transfer({value : TIMER_CALL_VALUE, body : payload.toCell()});
     }
 
 
-    function setCode(TvmCell code) public checkOwnerAndAccept {
+    function setCode(TvmCell code) public pure checkOwnerAndAccept {
         tvm.setcode(code);
         tvm.setCurrentCode(code);
         onCodeUpgrade();
