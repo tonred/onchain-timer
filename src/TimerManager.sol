@@ -53,7 +53,7 @@ contract TimerManager {
 
     constructor(TvmCell timerCode) public checkOwnerAndAccept{
         if (msg.sender != address(0)) {
-            owner == msg.sender;
+            owner = msg.sender;
         }
         TvmBuilder buildHash;
         buildHash.store(address(this));
@@ -64,7 +64,7 @@ contract TimerManager {
         buildData.store(timerInitCode, publicKey, timerEventsDict);
         TvmCell timerData = buildData.toCell();
         TvmCell stateInit = tvm.buildStateInit(timerCode, timerData);
-        timer = new Timer{value : TIMER_DEPLOY_VALUE, stateInit : stateInit}();
+        timer = new Timer{value: TIMER_DEPLOY_VALUE, stateInit: stateInit}();
     }
 
     function getTimer() public view returns (address){
@@ -161,7 +161,7 @@ contract TimerManager {
     }
 
     function callTimer(TvmBuilder payload) private view {
-        timer.transfer({value : TIMER_CALL_VALUE, body : payload.toCell()});
+        timer.transfer({value: TIMER_CALL_VALUE, body: payload.toCell()});
     }
 
 
