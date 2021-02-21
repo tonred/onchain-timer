@@ -71,6 +71,25 @@ async function get_tokens_from_giver(client, account) {
     await client.processing.process_message(params)
 }
 
+async function get_account_balance(client, account_address) {
+    if (!account_address) throw new Error("Account address not specified");
+    const {result} = await client.net.query_collection({
+        collection: "accounts",
+        filter: {id: {eq: account_address}},
+        result: "balance",
+    });
+    if (!result[0]) return "";
+    return parseInt(result[0].balance, 16);
+}
+
+async function is_account_valid(client, account_address) {
+    let accountBalance = await get_account_balance(client, account_address);
+    if (accountBalance <= 0) {
+        console.log(`Please, send some tokens to ${account_address} in ${options.network} and rerun this script`);
+        return false;
+    }
+    return true;
+}
 
 async function main(client) {
     const timer_code = await fs.readFile('./src/timer-code.boc', {encoding: 'base64'});
@@ -104,9 +123,8 @@ async function main(client) {
     if (options.nodeSe) {
         await get_tokens_from_giver(client, address);
         console.log(`Tokes were transferred from giver to ${address}`);
-    } else {
-        console.log(`Please, send some tokens to ${address} in ${options.network} and rerun this script`);
-        return
+    } else if (!await is_account_valid(client, address)) {
+        return;
     }
 
     await client.processing.process_message({
